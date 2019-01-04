@@ -1,0 +1,49 @@
+nav{
+
+    background-color: #404040;
+    overflow: hidden;
+    box-shadow: 5px 5px 25px #666666;
+}
+
+.navlink{
+
+    float: left;
+    color: white;
+    text-align: center;
+    padding: 10px 15px;
+    text-decoration: none;
+    font-size: 17px;
+    font-family: 'Lato', sans-serif;
+
+}
+
+a > i{
+  padding-right: 5px;
+}
+
+.navlink:hover{
+    background-color: lightslategrey;
+
+}
+
+body {
+    background-color: green;
+}
+
+.heading{
+    font-family: 'Lato', sans-serif;
+    text-align: center;
+    color: white;
+    font-size: 65px;
+}
+
+.info{
+
+
+}
+
+.medium-text{
+    text-align: center;
+    font-size: 35px;
+    font-family: 'Lato', sans-serif;
+}
