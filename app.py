@@ -1,4 +1,6 @@
-from flask import Flask
+from flask import Flask, render_template
+
+from data import *
 
 app = Flask(__name__)
 
@@ -12,4 +14,4 @@ def tournament():
     GET:
         
     """
-    return 'Tournament Page'
+    return render_template('index.html')
