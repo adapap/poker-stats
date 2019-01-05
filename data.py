@@ -10,43 +10,64 @@ class Season:
     """
     Seasons keep track of all data for a particular season.
 
+    Parameters
+    ----------
+    name: :class:`str`
+        The name of the season, e.g. "2016F-FH"
+
+    season_num: :class:`int`
+        The number of the season.
+
+    players: List[:class:`Player`]
+        A list of Player objects that participated in this season.
     """
-    def __init__(self, name: str, season_num: int, players: list):
+    def __init__(self, name, season_num, players):
         self.name = name
         self.season_num = season_num
         self.players = players
 
     @classmethod
     def from_file(cls, file):
-        """Opens a local data file and parses the cell values."""
+        """
+        Opens a local data file and parses the cell values.
+        Used to create Season objects through :class:`Stats`
+
+        :param str file: The name of the file containing JSON data.
+        :returns: :class:`Season` representing the input file.
+        """
         with open(f'data/{file}') as f:
             values = json.load(f)['values']
         season_name = None
         season_num = None
         players = []
+        num_tournaments = 0
         for i, data in enumerate(values):
             if not data:
                 continue
             if i == 0:
                 season_name, season_num = re.match(r'(.+) \(Season (\d+)\)', data[1]).groups()
+                num_tournaments = len([x for x in data if 'Tourn' in x])
             elif i > 2:
                 if len(data) < 4:
                     continue
                 _, bonus_points, total_points, name, *tournament_data = data
-                if total_points == '0':
+                if total_points == '0' or total_points == '':
                     continue
+                bonus_points = int(bonus_points or '0')
+                total_points = float(total_points)
                 placements = []
-                for i in range(1, len(tournament_data) - 1, 2):
-                    tournament_name = f'Tournament {(i - 1) // 2}'
-                    place = tournament_data[i]
-                    points = tournament_data[i + 1]
+                for i in range(1, min(len(tournament_data) - 1, 2 * num_tournaments - 1), 2):
+                    tournament_name = f'Tournament {(i + 1) // 2}'
+                    place = int(tournament_data[i] or 0)
+                    if place == 0:
+                        continue
+                    points = float(tournament_data[i + 1])
                     placement = {
                     'tournament': tournament_name,
                     'place': place,
                     'points': points
                     }
-                    if place:
-                        placements.append(place)
+                    placements.append(placement)
                 player = Player(season_num, bonus_points, total_points, name, placements)
                 players.append(player)
         return cls(season_name, season_num, players)
@@ -58,47 +79,80 @@ class Season:
 class Player:
     """
     Player stores information about one individual player in a season.
+
+    Parameters
+    ----------
+    season_num: :class:`int`
+        The season number (e.g. `7` for Season 7)
+
+    bonus_points: :class:`int`
+        The number of bonus points awarded this season.
+
+    total_points: :class:`float`
+        The total number of points earned this season.
+
+    name: :class:`str`
+        The unparsed name from the raw data.
+
+        "Doe, John" becomes "John Doe" as :attr:`name`
+
+    placements: List[:class:`dict`]
+        Contains the placements for each tournament.
+
+        Example placement:
+
+            >>> player.placements[0]
+            {
+                'tournament': '2018F',
+                'place': 13,
+                'points': 7.49
+            }
+    
     """
-    def __init__(self, season_num, bonus_points, total_points, name, placements: list):
+    def __init__(self, season_num, bonus_points, total_points, name, placements):
         self.season_num = season_num
         self.bonus_points = bonus_points
         self.total_points = total_points
         self.placements = placements
 
         if ',' in name:
-            name = name.split(',')
-            self.last_name = name[0].strip()
-            self.first_name = name[1].strip()
+            self.name = ' '.join(map(lambda x: x.strip(), name.split(',')))
         else:
-            self.first_name = name
-            self.last_name = ''
-
-    @property
-    def name(self):
-        return self.first_name + ' ' + self.last_name
+            self.name = name.strip()
 
     def __repr__(self):
-        return f'{self.name}: {self.points} (S{self.season_num})'
+        return f'{self.name} ({self.total_points} pts.)'
 
 
 class Stats:
     """
-    Stats is a wrapper for all user and tournament data.
+    Stats is a wrapper for all player and tournament data.
 
-    :property base_uri:
-    :property api_query:
-    :meth get_config:
-    :meth update_local_data:
-    :meth get_sheet_names:
-    :meth get_sheet:
-        :param name:
-    :meth parse_seasons:
+    Attributes
+    ----------
+    seasons: Dict[:class:`str`, :class:`Season`]
+        A collection of season objects mapped to their name.
+
+    players: Dict[:class:`str`, :class:`dict`]
+        A dictionary containing player season data, as well as their overall
+        ranks for each season, mapped to player names.
+        
+        For example, accessing player stats in the current season:
+        
+            >>> players['John Doe']
+            {
+                '2018F': John Doe (41 pts.),
+                '2018S': John Doe (30.12 pts.),
+                'ranks': [8, 17]
+            }
+
     """
 
     def __init__(self):
-        config = self.get_config()
+        config = self._get_config()
         self.spreadsheet_id = config.get('spreadsheet_id')
-        self.api_key = config.get('api_key')
+        with open('api_key.txt') as f:
+            self.api_key = f.read()
         self.last_timestamp = config.get('last_timestamp')
         self.cur_season = config.get('cur_season')
 
@@ -106,31 +160,36 @@ class Stats:
         current_timestamp = datetime.now()
         difference = current_timestamp - datetime.strptime(self.last_timestamp, '%Y-%m-%d %H:%M:%S.%f')
         if difference.days >= 7:
-            self.update_local_data(current_timestamp)
+            self._update_local_data(current_timestamp)
         
         # Parse all season data
-        self.seasons = {}
-        self.parse_seasons()
+        self.seasons = []
+        self._parse_seasons()
+
+        # Extrapolate player data from season data
+        self.players = {}
+        self._parse_players()
 
     @property
-    def base_uri(self):
+    def _base_uri(self):
         """The base URI for all Sheets API requests."""
         return f'https://sheets.googleapis.com/v4/spreadsheets/{self.spreadsheet_id}'
 
     @property
-    def api_query(self):
+    def _api_query(self):
+        """Query parameter used as a suffix to all API requests."""
         return f'?key={self.api_key}'
 
-    def get_config(self):
-        """Returns the configuration object represented by JSON."""
+    def _get_config(self):
+        """Reads and returns the configuration object saved locally as a JSON file."""
         config_path = 'config.json'
         with open(config_path) as f:
             data = json.load(f)
         return data
 
-    def update_local_data(self, timestamp):
-        """Updates the local copies of sheet data."""
-        names = self.get_sheet_names()
+    def _update_local_data(self, timestamp):
+        """Updates the local file copies of sheet data."""
+        names = self._get_sheet_names()
         cur_season = names[0]
 
         # If sheets do not exist, cache them
@@ -138,7 +197,7 @@ class Stats:
             path = f'data/{name}.json'
             # Always update the latest sheet
             if name == cur_season or not os.path.exists(path):
-                data = self.get_sheet(name)
+                data = self._get_sheet(name)
                 with open(path, 'w') as f:
                     json.dump(data, f, indent=4)
 
@@ -152,7 +211,7 @@ class Stats:
         with open('config.json', 'w') as f:
             json.dump(config, f, indent=4)
 
-    def get_sheet_names(self):
+    def _get_sheet_names(self):
         """Retrieves the sheet names from the JSON data."""
         uri = self.base_uri + self.api_query
         try:
@@ -162,7 +221,7 @@ class Stats:
         except ValueError:
             print(f'Error decoding JSON from sheet list response')
 
-    def get_sheet(self, name):
+    def _get_sheet(self, name):
         """Retrieves sheet data given a title."""
         uri = self.base_uri + f'/values/{name}' + self.api_query
         try:
@@ -171,16 +230,25 @@ class Stats:
         except ValueError:
             print(f'Error decoding JSON from sheet {name}')
 
-    def parse_seasons(self):
-        """
-        Parses all season files in the /data folder.
-
-        :returns: dictionary of Season objects
-        """
+    def _parse_seasons(self):
+        """Parses all season files in the /data folder."""
         for file in os.listdir('data'):
             name = file.rstrip('.json')
             season = Season.from_file(file)
-            self.seasons[name] = season
+            self.seasons.append(season)
+
+    def _parse_players(self):
+        """Extracts player information and formats it for convenience."""
+        players = defaultdict(dict)
+        for season in self.seasons:
+            for rank, player in enumerate(sorted(season.players, key=lambda p: p.total_points, reverse=True)):
+                player.rank = rank
+                players[player.name][season.name] = player
+        for player_name, player_data in players.items():
+            season_data = player_data.values()
+            ranks = [p.rank for p in season_data]
+            player_data.update({'ranks': ranks})
+            self.players[player_name] = player_data
 
     def __repr__(self):
         return f'Seasons: {self.seasons}'

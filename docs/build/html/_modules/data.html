@@ -1,0 +1,360 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>data &#8212; Poker Stats 0.1a documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for data</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="k">import</span> <span class="n">pprint</span>
+
+<div class="viewcode-block" id="Season"><a class="viewcode-back" href="../data.html#data.Season">[docs]</a><span class="k">class</span> <span class="nc">Season</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Seasons keep track of all data for a particular season.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name: :class:`str`</span>
+<span class="sd">        The name of the season, e.g. &quot;2016F-FH&quot;</span>
+
+<span class="sd">    season_num: :class:`int`</span>
+<span class="sd">        The number of the season.</span>
+
+<span class="sd">    players: List[:class:`Player`]</span>
+<span class="sd">        A list of Player objects that participated in this season.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">season_num</span><span class="p">,</span> <span class="n">players</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">season_num</span> <span class="o">=</span> <span class="n">season_num</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">players</span> <span class="o">=</span> <span class="n">players</span>
+
+<div class="viewcode-block" id="Season.from_file"><a class="viewcode-back" href="../data.html#data.Season.from_file">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Opens a local data file and parses the cell values.</span>
+<span class="sd">        Used to create Season objects through :class:`Stats`</span>
+
+<span class="sd">        :param str file: The name of the file containing JSON data.</span>
+<span class="sd">        :returns: :class:`Season` representing the input file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;data/</span><span class="si">{file}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span>
+        <span class="n">season_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">season_num</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">players</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">num_tournaments</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">season_name</span><span class="p">,</span> <span class="n">season_num</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(.+) \(Season (\d+)\)&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+                <span class="n">num_tournaments</span> <span class="o">=</span> <span class="nb">len</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">if</span> <span class="s1">&#39;Tourn&#39;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">bonus_points</span><span class="p">,</span> <span class="n">total_points</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">tournament_data</span> <span class="o">=</span> <span class="n">data</span>
+                <span class="k">if</span> <span class="n">total_points</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span> <span class="ow">or</span> <span class="n">total_points</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">bonus_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">bonus_points</span> <span class="ow">or</span> <span class="s1">&#39;0&#39;</span><span class="p">)</span>
+                <span class="n">total_points</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_points</span><span class="p">)</span>
+                <span class="n">placements</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tournament_data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_tournaments</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+                    <span class="n">tournament_name</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;Tournament {(i + 1) // 2}&#39;</span>
+                    <span class="n">place</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tournament_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">place</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">points</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">tournament_data</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                    <span class="n">placement</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;tournament&#39;</span><span class="p">:</span> <span class="n">tournament_name</span><span class="p">,</span>
+                    <span class="s1">&#39;place&#39;</span><span class="p">:</span> <span class="n">place</span><span class="p">,</span>
+                    <span class="s1">&#39;points&#39;</span><span class="p">:</span> <span class="n">points</span>
+                    <span class="p">}</span>
+                    <span class="n">placements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">placement</span><span class="p">)</span>
+                <span class="n">player</span> <span class="o">=</span> <span class="n">Player</span><span class="p">(</span><span class="n">season_num</span><span class="p">,</span> <span class="n">bonus_points</span><span class="p">,</span> <span class="n">total_points</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">placements</span><span class="p">)</span>
+                <span class="n">players</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">player</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">season_name</span><span class="p">,</span> <span class="n">season_num</span><span class="p">,</span> <span class="n">players</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;{len(self.players)} players&#39;</span></div>
+
+
+<div class="viewcode-block" id="Player"><a class="viewcode-back" href="../data.html#data.Player">[docs]</a><span class="k">class</span> <span class="nc">Player</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Player stores information about one individual player in a season.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    season_num: :class:`int`</span>
+<span class="sd">        The season number (e.g. `7` for Season 7)</span>
+
+<span class="sd">    bonus_points: :class:`int`</span>
+<span class="sd">        The number of bonus points awarded this season.</span>
+
+<span class="sd">    total_points: :class:`float`</span>
+<span class="sd">        The total number of points earned this season.</span>
+
+<span class="sd">    name: :class:`str`</span>
+<span class="sd">        The unparsed name from the raw data.</span>
+
+<span class="sd">        &quot;Doe, John&quot; becomes &quot;John Doe&quot; as :attr:`name`</span>
+
+<span class="sd">    placements: List[:class:`dict`]</span>
+<span class="sd">        Contains the placements for each tournament.</span>
+
+<span class="sd">        Example placement:</span>
+
+<span class="sd">            &gt;&gt;&gt; player.placements[0]</span>
+<span class="sd">            {</span>
+<span class="sd">                &#39;tournament&#39;: &#39;2018F&#39;,</span>
+<span class="sd">                &#39;place&#39;: 13,</span>
+<span class="sd">                &#39;points&#39;: 7.49</span>
+<span class="sd">            }</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">season_num</span><span class="p">,</span> <span class="n">bonus_points</span><span class="p">,</span> <span class="n">total_points</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">placements</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">season_num</span> <span class="o">=</span> <span class="n">season_num</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bonus_points</span> <span class="o">=</span> <span class="n">bonus_points</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_points</span> <span class="o">=</span> <span class="n">total_points</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">placements</span> <span class="o">=</span> <span class="n">placements</span>
+
+        <span class="k">if</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{self.name}</span><span class="s1"> (</span><span class="si">{self.total_points}</span><span class="s1"> pts.)&#39;</span></div>
+
+
+<div class="viewcode-block" id="Stats"><a class="viewcode-back" href="../data.html#data.Stats">[docs]</a><span class="k">class</span> <span class="nc">Stats</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stats is a wrapper for all player and tournament data.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    seasons: Dict[:class:`str`, :class:`Season`]</span>
+<span class="sd">        A collection of season objects mapped to their name.</span>
+
+<span class="sd">    players: Dict[:class:`str`, :class:`dict`]</span>
+<span class="sd">        A dictionary containing player season data, as well as their overall</span>
+<span class="sd">        ranks for each season, mapped to player names.</span>
+<span class="sd">        </span>
+<span class="sd">        For example, accessing player stats in the current season:</span>
+<span class="sd">        </span>
+<span class="sd">            &gt;&gt;&gt; players[&#39;John Doe&#39;]</span>
+<span class="sd">            {</span>
+<span class="sd">                &#39;2018F&#39;: John Doe (41 pts.),</span>
+<span class="sd">                &#39;2018S&#39;: John Doe (30.12 pts.),</span>
+<span class="sd">                &#39;ranks&#39;: [8, 17]</span>
+<span class="sd">            }</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spreadsheet_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;spreadsheet_id&#39;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;api_key.txt&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_timestamp</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;last_timestamp&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cur_season</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;cur_season&#39;</span><span class="p">)</span>
+
+        <span class="c1"># If the time difference is greater than 1 week, retrieve data</span>
+        <span class="n">current_timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">difference</span> <span class="o">=</span> <span class="n">current_timestamp</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_timestamp</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S.</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">difference</span><span class="o">.</span><span class="n">days</span> <span class="o">&gt;=</span> <span class="mi">7</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_local_data</span><span class="p">(</span><span class="n">current_timestamp</span><span class="p">)</span>
+        
+        <span class="c1"># Parse all season data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seasons</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_seasons</span><span class="p">()</span>
+
+        <span class="c1"># Extrapolate player data from season data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">players</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_players</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_base_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The base URI for all Sheets API requests.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;https://sheets.googleapis.com/v4/spreadsheets/</span><span class="si">{self.spreadsheet_id}</span><span class="s1">&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_api_query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query parameter used as a suffix to all API requests.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;?key=</span><span class="si">{self.api_key}</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reads and returns the configuration object saved locally as a JSON file.&quot;&quot;&quot;</span>
+        <span class="n">config_path</span> <span class="o">=</span> <span class="s1">&#39;config.json&#39;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_update_local_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Updates the local file copies of sheet data.&quot;&quot;&quot;</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sheet_names</span><span class="p">()</span>
+        <span class="n">cur_season</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># If sheets do not exist, cache them</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;data/</span><span class="si">{name}</span><span class="s1">.json&#39;</span>
+            <span class="c1"># Always update the latest sheet</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="n">cur_season</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_sheet</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="c1"># Update config file</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;spreadsheet_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">spreadsheet_id</span><span class="p">,</span>
+            <span class="s2">&quot;api_key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
+            <span class="s2">&quot;last_timestamp&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">timestamp</span><span class="p">),</span>
+            <span class="s2">&quot;cur_season&quot;</span><span class="p">:</span> <span class="n">cur_season</span>
+        <span class="p">}</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;config.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_sheet_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves the sheet names from the JSON data.&quot;&quot;&quot;</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_uri</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_query</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="n">sheet_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="n">sheet</span><span class="p">[</span><span class="s1">&#39;properties&#39;</span><span class="p">][</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">sheet</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">[</span><span class="s1">&#39;sheets&#39;</span><span class="p">]]</span> <span class="k">if</span> <span class="s1">&#39;test&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">sheet_names</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Error decoding JSON from sheet list response&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_sheet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieves sheet data given a title.&quot;&quot;&quot;</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_uri</span> <span class="o">+</span> <span class="n">f</span><span class="s1">&#39;/values/</span><span class="si">{name}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_query</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">resp</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Error decoding JSON from sheet </span><span class="si">{name}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_parse_seasons</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parses all season files in the /data folder.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;.json&#39;</span><span class="p">)</span>
+            <span class="n">season</span> <span class="o">=</span> <span class="n">Season</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">seasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">season</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_parse_players</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extracts player information and formats it for convenience.&quot;&quot;&quot;</span>
+        <span class="n">players</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">season</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">seasons</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">rank</span><span class="p">,</span> <span class="n">player</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">season</span><span class="o">.</span><span class="n">players</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">total_points</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
+                <span class="n">player</span><span class="o">.</span><span class="n">rank</span> <span class="o">=</span> <span class="n">rank</span>
+                <span class="n">players</span><span class="p">[</span><span class="n">player</span><span class="o">.</span><span class="n">name</span><span class="p">][</span><span class="n">season</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">player</span>
+        <span class="k">for</span> <span class="n">player_name</span><span class="p">,</span> <span class="n">player_data</span> <span class="ow">in</span> <span class="n">players</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">season_data</span> <span class="o">=</span> <span class="n">player_data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="n">ranks</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">rank</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">season_data</span><span class="p">]</span>
+            <span class="n">player_data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;ranks&#39;</span><span class="p">:</span> <span class="n">ranks</span><span class="p">})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">players</span><span class="p">[</span><span class="n">player_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">player_data</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;Seasons: </span><span class="si">{self.seasons}</span><span class="s1">&#39;</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Poker Stats</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../app.html">App Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../data.html">Data &amp; Statistics</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, adapap.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
