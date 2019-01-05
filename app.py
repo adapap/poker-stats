@@ -19,4 +19,8 @@ def tournament():
     return render_template('index.html')
 
 
+@app.route('/stats')
+def load_stats():
+    return render_template('stats.html')
+
 
