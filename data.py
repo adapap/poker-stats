@@ -46,7 +46,7 @@ class Season:
                     'points': points
                     }
                     if place:
-                        placements.append(place)
+                        placements.append(placement)
                 player = Player(season_num, bonus_points, total_points, name, placements)
                 players.append(player)
         return cls(season_name, season_num, players)
@@ -78,7 +78,7 @@ class Player:
         return self.first_name + ' ' + self.last_name
 
     def __repr__(self):
-        return f'{self.name}: {self.points} (S{self.season_num})'
+        return f'{self.name}: {self.total_points} (S{self.season_num})'
 
 
 class Stats:

@@ -30,6 +30,13 @@ body {
     background-color: green;
 }
 
+.subheading{
+    font-family: 'Lato', sans-serif;
+    text-align: center;
+    color: white;
+    font-size: 35px;
+}
+
 .heading{
     font-family: 'Lato', sans-serif;
     text-align: center;
@@ -37,13 +44,21 @@ body {
     font-size: 65px;
 }
 
-.info{
 
+.heart {
+    color: #e25555;
+}
+
+.credit{
+
+    color: turquoise;
 
 }
 
-.medium-text{
-    text-align: center;
-    font-size: 35px;
+footer{
+    position: absolute;
+    bottom: 3%;
+    color: white;
+    font-size: 15px;
     font-family: 'Lato', sans-serif;
 }
