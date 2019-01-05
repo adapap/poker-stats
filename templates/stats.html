@@ -2,11 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>PokerStats</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
 {% include 'navbar.html' %}
+<div class="button-container">
+<a href="#" id="most-final-tables" class="stats-button">Most Final Tables</a>
+<a href="#" id="most-top-3" class="stats-button">Most Top 3</a><br>
+</div>
 
+<div id="stats-container">
+    <p class="subheading">Stats info!</p>
+
+<div hidden id="final-tables">
+    {% for player, num_tables in most_finals %}
+      <p class="stat">{{ player }}: {{ num_tables }}</p>
+  {% endfor %}
+
+</div>
+
+ <div hidden id="top-3">
+    {% for player, num_tables in most_top3 %}
+      <p class="stat">{{ player }}: {{ num_tables }}</p>
+  {% endfor %}
+</div>
+
+
+</div>
 {% include 'footer.html' %}
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>

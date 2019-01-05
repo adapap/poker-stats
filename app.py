@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 
-from data import *
+from stats import *
 
 
 
@@ -20,7 +20,11 @@ def tournament():
 
 
 @app.route('/stats')
-def load_stats():
-    return render_template('stats.html')
+def load_stats(most_finals=most_final_tables("2018F"), most_top3=most_top_3("2018F")):
+
+    return render_template('stats.html', most_finals=most_finals, most_top3=most_top3)
+
+
+
 
 
