@@ -101,9 +101,9 @@ class Player:
 
         Example placement:
 
-            >>> player.placements[0]
+            >>> player.placements[1]
             {
-                'tournament': '2018F',
+                'tournament': 'Tournament 2',
                 'place': 13,
                 'points': 7.49
             }
@@ -130,7 +130,10 @@ class Stats:
 
     Attributes
     ----------
-    seasons: Dict[:class:`str`, :class:`Season`]
+    cur_season: :class:`str`
+        The current season name.
+
+    seasons: List[:class:`Season`]
         A collection of season objects mapped to their name.
 
     players: Dict[:class:`str`, :class:`dict`]
