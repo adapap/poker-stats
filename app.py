@@ -28,7 +28,7 @@ def load_profile_search(name=None, season=None):
 
 @app.route('/profiles/<name>')
 @app.route('/profiles/<name>/')
-def load_profile(name=None, season=CURRENT_SEASON, best_finish=None, tourn_finish=None, no_finaltables=None):
+def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish=None, tourn_finish=None, no_finaltables=None):
     names = get_all_names(CURRENT_SEASON)
 
     if name not in names:
@@ -37,8 +37,9 @@ def load_profile(name=None, season=CURRENT_SEASON, best_finish=None, tourn_finis
         tourn_finish = get_best_placement(name, CURRENT_SEASON)[0]
         best_finish = get_best_placement(name, CURRENT_SEASON)[1]
         no_finaltables = get_final_tables(name, CURRENT_SEASON)
+        tournaments = tournaments_no(name, CURRENT_SEASON)
 
-    return render_template('profilepage.html', name=name, best_finish=best_finish, tourn_finish=tourn_finish,
+    return render_template('profilepage.html', name=name, tournaments=tournaments, best_finish=best_finish, tourn_finish=tourn_finish,
                            season=season, no_finaltables=no_finaltables)
 
 
@@ -63,9 +64,12 @@ def search(name=None, response=None, name_list=None):
 
 
 @app.route('/stats')
-def load_stats(most_finals=most_final_tables(CURRENT_SEASON), most_top3=most_top_3(CURRENT_SEASON), best_sum=sum_of_placements(CURRENT_SEASON)):
+def load_stats(most_finals=most_final_tables(CURRENT_SEASON), most_top3=most_top_3(CURRENT_SEASON),
+               best_sum=sum_of_placements(CURRENT_SEASON),
+               most_consecutive=most_consecutive_finals(CURRENT_SEASON)):
 
-    return render_template('stats.html', most_finals=most_finals, most_top3=most_top3, best_sum=best_sum)
+    return render_template('stats.html', most_finals=most_finals, most_top3=most_top3,
+                           best_sum=best_sum, most_consecutive=most_consecutive)
 
 
 

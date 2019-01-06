@@ -15,6 +15,14 @@ $(function(){
 
     });
 
+
+     $("#most-consecutive").click(function(){
+
+        $("#most-cscv").show().siblings("div").hide();
+
+
+    });
+
      $("#submitbutton").click(function(){
 
          var search = $("#searchbox");

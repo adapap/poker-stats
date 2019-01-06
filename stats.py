@@ -86,6 +86,35 @@ def get_best_placement(name, season):
     return (min_key, parsed_placements[min_key])
 
 
+def most_consecutive_finals(season):
+
+    seasonid = seasons[season]
+    player_list = info.seasons[seasonid].players
+    result = defaultdict(int)
+
+    for i, player in enumerate(player_list):
+        count = 0
+        temp_list = []
+        for p in player.placements:
+
+            if 0 < p['place'] < 10:
+                count += 1
+                temp_list += [count]
+            else:
+                count = 0
+        if len(temp_list) > 0:
+            result[player.name] = max(temp_list)
+
+
+    result = {k: v for (k, v) in result.items() if v > 1}
+
+    data = sorted(filter(lambda y: y[1], result.items()), key=lambda x: -x[1])
+    return [x for x in data]
+
+
+
+
+
 def get_final_tables(name, season):
     season_id = seasons[season]
     player_list = info.seasons[season_id].players
@@ -114,6 +143,16 @@ def tournament_count(season):
 
     return OrderedDict(sorted(players.items(), key=lambda t: t[0]))
 
+def tournaments_no(name, season):
+    season_id = seasons[season]
+    player_list = info.seasons[season_id].players
+
+    for index, player in enumerate(player_list):
+
+        if str(player.name) == name:
+            return len(player.placements)
+
+
 def print_best_sum():
     names = sum_of_placements("2018F")[0]
 
@@ -122,10 +161,6 @@ def print_best_sum():
 
 
 
-
-#print(tournament_count("2018F"))
-print(sum_of_placements("2018F"))
-#print(print_best_sum())
 
 
 

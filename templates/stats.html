@@ -11,12 +11,14 @@
 <div class="button-container">
 <a href="#" id="most-final-tables" class="stats-button">Most Final Tables</a>
 <a href="#" id="most-top-3" class="stats-button">Most Top 3</a><br>
+<a href="#" id="most-consecutive" class="stats-button">Most Consecutive Final Tables</a><br>
 </div>
 
 <div id="stats-container">
     <p class="subheading">Stats info!</p>
 
 <div hidden id="final-tables">
+    <h3 class="subheading">Most Final Tables</h3>
     {% for player, num_tables in most_finals %}
       <p class="stat">{{ player }}: {{ num_tables }}</p>
   {% endfor %}
@@ -24,11 +26,18 @@
 </div>
 
  <div hidden id="top-3">
+      <h3 class="subheading">Most Top 3 Finishes</h3>
     {% for player, num_tables in most_top3 %}
       <p class="stat">{{ player }}: {{ num_tables }}</p>
   {% endfor %}
 </div>
 
+     <div hidden id="most-cscv">
+      <h3 class="subheading">Most Consecutive Final Tables</h3>
+    {% for player, num_tables in most_consecutive %}
+      <p class="stat">{{ player }}: {{ num_tables }}</p>
+  {% endfor %}
+</div>
 
 
 
