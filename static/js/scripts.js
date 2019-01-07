@@ -1,12 +1,6 @@
 
 $(function(){
 
-    $("#most-final-tables").click(function(){
-
-        $("#final-tables").show().siblings("div").hide();
-
-
-    });
 
      $("#most-top-3").click(function(){
 
@@ -17,8 +11,13 @@ $(function(){
 
 
      $("#most-consecutive").click(function(){
-
         $("#most-cscv").show().siblings("div").hide();
+
+
+    });
+
+     $("#best-avg-place-box").click(function(){
+        $("#best-avg-place").show().siblings("div").hide();
 
 
     });

@@ -153,12 +153,55 @@ def tournaments_no(name, season):
             return len(player.placements)
 
 
+def get_results(name, season):
+    season_id = seasons[season]
+    player_list = info.seasons[season_id].players
+    p_obj = None
+    p_results = []
+    for index, player in enumerate(player_list):
+
+        if str(player.name) == name:
+            p_obj = player
+            break
+
+    for p in p_obj.placements:
+        tuple_results = [(p['tournament'], p['place'])]
+        p_results += tuple_results
+
+    return p_results
+
+
+def best_avg_place(season):
+    best_percent = 0.5
+    season_id = seasons[season]
+    player_list = info.seasons[season_id].players
+
+    minimum_percent = [i for i in player_list if len(i.placements)/10 > 0.5]
+    player_total = defaultdict(int)
+    for index, player in enumerate(minimum_percent):
+
+        for j in range(len(player.placements)):
+            player_total[player.name] += player.placements[j]['place']
+
+        player_total[player.name] = round(player_total[player.name]/len(player.placements), 2)
+
+    data = sorted(filter(lambda y: y[1], player_total.items()), key=lambda x: x[1])
+    return [x for x in data]
+
+
+
+
+
+
+
+
+
+
 def print_best_sum():
     names = sum_of_placements("2018F")[0]
 
     for i in names:
         print(i + ": " + str(sum_of_placements("2018F")[1][i]))
-
 
 
 
