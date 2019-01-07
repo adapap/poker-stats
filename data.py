@@ -56,7 +56,7 @@ class Season:
                 bonus_points = int(bonus_points or '0')
                 total_points = float(total_points)
                 placements = []
-                for i in range(1, min(len(tournament_data) - 1, 2 * num_tournaments - 1), 2):
+                for i in range(1, min(len(tournament_data) - 1, 2 * num_tournaments), 2):
                     tournament_name = f'Tournament {(i + 1) // 2}'
                     place = int(tournament_data[i] or 0)
                     if place == 0:
@@ -116,7 +116,7 @@ class Player:
         self.placements = placements
 
         if ',' in name:
-            self.name = ' '.join(map(lambda x: x.strip(), name.split(',')))
+            self.name = ' '.join(map(lambda x: x.strip(), name.split(',')[::-1]))
         else:
             self.name = name.strip()
 
@@ -255,3 +255,29 @@ class Stats:
 
     def __repr__(self):
         return f'Seasons: {self.seasons}'
+
+def season_sort(x):
+    return (x[:4], -ord(x[4]), x[4:])
+
+
+def tournament_count(season):
+    players = defaultdict(int)
+    player_list = Stats().seasons[-2].players
+
+    for i, player in enumerate(player_list): # change to player
+
+        for placement in player.placements: # enumerate not needed
+            players[placement['tournament']] += 1
+    return players
+tournament_size = tournament_count('2018F')
+scores = {}
+for player in Stats().seasons[-2].players:
+    if len(player.placements) < 3:
+        continue
+    score = 0
+    for place in player.placements:
+        score += place['place'] / tournament_size[place['tournament']]
+    scores[player.name] = 100 - int(round(score / len(player.placements) * 100, 0))
+
+for p in sorted(scores, key=scores.get, reverse=True):
+    print(f'{scores[p]} - {p}')
