@@ -269,15 +269,3 @@ def tournament_count(season):
         for placement in player.placements: # enumerate not needed
             players[placement['tournament']] += 1
     return players
-tournament_size = tournament_count('2018F')
-scores = {}
-for player in Stats().seasons[-2].players:
-    if len(player.placements) < 3:
-        continue
-    score = 0
-    for place in player.placements:
-        score += place['place'] / tournament_size[place['tournament']]
-    scores[player.name] = 100 - int(round(score / len(player.placements) * 100, 0))
-
-for p in sorted(scores, key=scores.get, reverse=True):
-    print(f'{scores[p]} - {p}')

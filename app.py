@@ -1,11 +1,24 @@
+# Dependencies
+import logging
 from flask import Flask, render_template
 
+# Local
 from stats import *
 
+app = Flask(__name__)
+log = logging.getLogger('werkzeug')
+log.disabled = True
+app.logger.disabled = True
+
+app.jinja_env.add_extension('pypugjs.ext.jinja.PyPugJSExtension')
 
 info = Stats()
-app = Flask(__name__)
 CURRENT_SEASON = "2018F"
+# Format: SB, BB, Ante, Time (min.)
+DEFAULT_BLINDS = [
+    [10, 20, 0, 0.2],
+    [25, 50, 1, 0.35]
+]
 
 @app.route('/')
 @app.route('/tournament')
@@ -15,7 +28,7 @@ def tournament():
     Features include a blind clock with blind configurations and table randomizer.
 
     GET:
-        
+        Incomplete.
     """
     return render_template('index.html')
 
@@ -27,7 +40,6 @@ def load_profile_search(name=None, season=None):
 
 
 @app.route('/profiles/<name>')
-@app.route('/profiles/<name>/')
 def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish=None, tourn_finish=None, no_finaltables=None):
     names = get_all_names(CURRENT_SEASON)
 
@@ -72,8 +84,14 @@ def load_stats(most_finals=most_final_tables(CURRENT_SEASON), most_top3=most_top
                            best_sum=best_sum, most_consecutive=most_consecutive)
 
 
+@app.route('/clock')
+def clock():
+    """
+    The clock starts at a default value and has a given blind structure.
+    The structure must include SB, BB, ante, and duration values (min).
 
-
-
-
-
+    GET:
+        Loads the tournament clock with the default blind structure.
+    """
+    
+    return render_template('clock.pug', blinds=DEFAULT_BLINDS)

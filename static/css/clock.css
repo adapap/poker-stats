@@ -1,0 +1,17 @@
+#clock-wrapper {
+    align-content: center;
+    border: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Open Sans';
+    font-size: 1.5rem;
+    margin: auto;
+    justify-content: center;
+    width: 80%;
+
+}
+
+#clock-wrapper > div {
+    display: flex;
+    justify-content: center;
+}
