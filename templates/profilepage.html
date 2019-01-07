@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PokerStats</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+<body>
+{% include 'navbar.html' %}
+
+{% if name %}
+    <p>{{name}}'s profile</p>
+    <h2>Season: {{season}}</h2>
+    <p>Tournaments: {{tournaments}}</p>
+    <p>Best Finish: {{tourn_finish}}: Place: {{best_finish}} </p>
+    <p># of final tables: {{no_finaltables}} </p>
+{% else %}
+    <p>Profile not found.</p>
+{% endif %}
+{% include 'footer.html' %}
+
+</body>
+</html>
