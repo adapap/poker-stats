@@ -1,0 +1,37 @@
+@import 'base.scss';
+
+#clock-wrapper {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+
+    .clock-item {
+        font-size: 2.25rem;
+        padding: 0.5rem;
+        text-align: center;
+        width: 50%;
+
+        .hh-mm {
+            font-size: 6.0rem;
+        }
+
+        .ss {
+            color: lighten(black, 20%);
+            font-size: 3.75rem;
+            margin-left: 0.25rem;
+        }
+    }
+
+    .next-blind {
+        background: darken(white, 10%);
+        cursor: pointer;
+        margin-top: 2.0rem;
+        padding: 0.5rem;
+
+        &:active, &:hover {
+            background: darken(white, 20%);
+        }
+    }
+}

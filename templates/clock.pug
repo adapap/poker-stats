@@ -8,13 +8,15 @@ block css
 
 block content
     #clock-wrapper
-        div Time:
-            .time 00:00:00
-        div Blinds:
-            .blinds -/-
-        div Ante
+        .clock-item
+            .time
+                span.hh-mm 00:00
+                span.ss 00
+        .clock-item Blinds
+            .blinds - / -
+        .clock-item Ante
             .ante 0
-        .start Start
+        .next-blind Next Blind
 
 block scripts
     script.
@@ -24,20 +26,24 @@ block scripts
                 let s = ftime(time % 60)
                 let m = ftime(Math.floor(time / 60) % 60)
                 let h = ftime(Math.floor(time / 60 / 60) % 24)
-                let timestr = `${h}:${m}:${s}`
-                $('.time').text(timestr).fadeIn(500)
+                let hh_mm = `${h}:${m}`
+                let ss = `${s}`
+                $('.time .hh-mm').text(hh_mm)
+                $('.time .ss').fadeOut(200, function() {
+                    $(this).text(ss).fadeIn(300)
+                })
             }
 
             const blinds = #{ blinds }
             var cur_blind = 0
-            $('.start').click(() => {
+            $('.next-blind').click(() => {
                 // Start the next blind
                 let [small_blind, big_blind, ante, minutes] = blinds[cur_blind]
                 let time = Math.floor(minutes * 60)
                 update_clock(time)
                 time -= 1
 
-                let blindstr = `${small_blind}/${big_blind}`
+                let blindstr = `${small_blind} / ${big_blind}`
                 $('.blinds').text(blindstr)
                 $('.ante').text(ante)
 

@@ -1,17 +1,32 @@
-#clock-wrapper {
-    align-content: center;
-    border: 1px solid black;
-    display: flex;
-    flex-direction: column;
-    font-family: 'Open Sans';
-    font-size: 1.5rem;
-    margin: auto;
-    justify-content: center;
-    width: 80%;
+body {
+  display: flex;
+  height: 100vh;
+  margin: 0; }
 
-}
+  * {
+    font-family: 'Open Sans'; }
 
-#clock-wrapper > div {
-    display: flex;
-    justify-content: center;
-}
+    #clock-wrapper {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      width: 100%; }
+      #clock-wrapper .clock-item {
+        font-size: 2.25rem;
+        padding: 0.5rem;
+        text-align: center;
+        width: 50%; }
+        #clock-wrapper .clock-item .hh-mm {
+          font-size: 6rem; }
+          #clock-wrapper .clock-item .ss {
+            color: #333;
+            font-size: 3.75rem;
+            margin-left: 0.25rem; }
+      #clock-wrapper .next-blind {
+        background: #e6e6e6;
+        cursor: pointer;
+        margin-top: 2rem;
+        padding: 0.5rem; }
+        #clock-wrapper .next-blind:active, #clock-wrapper .next-blind:hover {
+          background: #ccc; }

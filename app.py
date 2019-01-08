@@ -1,6 +1,7 @@
 # Dependencies
 import logging
 from flask import Flask, render_template
+from flask_scss import Scss
 
 # Local
 from stats import *
@@ -10,7 +11,10 @@ log = logging.getLogger('werkzeug')
 log.disabled = True
 app.logger.disabled = True
 
+# Pug - HTML Template Engine
 app.jinja_env.add_extension('pypugjs.ext.jinja.PyPugJSExtension')
+# Sass - CSS Preprocessor
+Scss(app, static_dir='static/css', asset_dir='static/Scss')
 
 info = Stats()
 CURRENT_SEASON = "2018F"
