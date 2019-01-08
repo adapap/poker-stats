@@ -39,8 +39,8 @@ def load_profile_search(name=None, season=None):
 
 
 
-@app.route('/profiles/<name>')
-def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish=None, tourn_finish=None, no_finaltables=None):
+@app.route('/profiles/<name>/')
+def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish=None, tourn_finish=None, no_finaltables=None, results=None):
     names = get_all_names(CURRENT_SEASON)
 
     if name not in names:
@@ -50,9 +50,10 @@ def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish
         best_finish = get_best_placement(name, CURRENT_SEASON)[1]
         no_finaltables = get_final_tables(name, CURRENT_SEASON)
         tournaments = tournaments_no(name, CURRENT_SEASON)
+        results = get_results(name, CURRENT_SEASON)
 
     return render_template('profilepage.html', name=name, tournaments=tournaments, best_finish=best_finish, tourn_finish=tourn_finish,
-                           season=season, no_finaltables=no_finaltables)
+                           season=season, no_finaltables=no_finaltables, results=results)
 
 
 
