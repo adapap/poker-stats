@@ -116,7 +116,7 @@ class Player:
         self.placements = placements
 
         if ',' in name:
-            self.name = ' '.join(map(lambda x: x.strip(), name.split(',')))
+            self.name = ' '.join(map(lambda x: x.strip(), name.split(',')[::-1]))
         else:
             self.name = name.strip()
 
@@ -255,3 +255,17 @@ class Stats:
 
     def __repr__(self):
         return f'Seasons: {self.seasons}'
+
+def season_sort(x):
+    return (x[:4], -ord(x[4]), x[4:])
+
+
+def tournament_count(season):
+    players = defaultdict(int)
+    player_list = Stats().seasons[-2].players
+
+    for i, player in enumerate(player_list): # change to player
+
+        for placement in player.placements: # enumerate not needed
+            players[placement['tournament']] += 1
+    return players

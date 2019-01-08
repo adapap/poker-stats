@@ -1,0 +1,62 @@
+extends base.pug
+
+block title
+    title Clock
+
+block css
+    +stylesheet('clock.css')
+
+block content
+    #clock-wrapper
+        div Time:
+            .time 00:00:00
+        div Blinds:
+            .blinds -/-
+        div Ante
+            .ante 0
+        .start Start
+
+block scripts
+    script.
+        const ftime = (n) => n.toString().padStart(2, '0')
+        $(() => {
+            function update_clock(time) {
+                let s = ftime(time % 60)
+                let m = ftime(Math.floor(time / 60) % 60)
+                let h = ftime(Math.floor(time / 60 / 60) % 24)
+                let timestr = `${h}:${m}:${s}`
+                $('.time').text(timestr).fadeIn(500)
+            }
+
+            const blinds = #{ blinds }
+            var cur_blind = 0
+            $('.start').click(() => {
+                // Start the next blind
+                let [small_blind, big_blind, ante, minutes] = blinds[cur_blind]
+                let time = Math.floor(minutes * 60)
+                update_clock(time)
+                time -= 1
+
+                let blindstr = `${small_blind}/${big_blind}`
+                $('.blinds').text(blindstr)
+                $('.ante').text(ante)
+
+                let interval = 1000
+                var expected = Date.now() + interval
+                setTimeout(step, interval)
+                function step() {
+                    var dt = Date.now() - expected
+                    if (dt > interval) {
+                        // Handle large discrepancy
+                    }
+                    update_clock(time)
+                    if (time == 0) {
+                        cur_blind += 1
+                        return
+                    }
+                    time -= 1
+                    expected += interval
+                    setTimeout(step, Math.max(0, interval - dt))
+                }
+            })
+        })

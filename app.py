@@ -1,11 +1,24 @@
+# Dependencies
+import logging
 from flask import Flask, render_template
 
+# Local
 from stats import *
 
+app = Flask(__name__)
+log = logging.getLogger('werkzeug')
+log.disabled = True
+app.logger.disabled = True
+
+app.jinja_env.add_extension('pypugjs.ext.jinja.PyPugJSExtension')
 
 info = Stats()
-app = Flask(__name__)
 CURRENT_SEASON = "2018F"
+# Format: SB, BB, Ante, Time (min.)
+DEFAULT_BLINDS = [
+    [10, 20, 0, 0.2],
+    [25, 50, 1, 0.35]
+]
 
 @app.route('/')
 @app.route('/tournament')
@@ -15,7 +28,7 @@ def tournament():
     Features include a blind clock with blind configurations and table randomizer.
 
     GET:
-        
+        Incomplete.
     """
     return render_template('index.html')
 
@@ -27,9 +40,7 @@ def load_profile_search(name=None, season=None):
 
 
 @app.route('/profiles/<name>')
-@app.route('/profiles/<name>/')
-def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish=None, tourn_finish=None,
-                 no_finaltables=None, results=None):
+def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish=None, tourn_finish=None, no_finaltables=None):
     names = get_all_names(CURRENT_SEASON)
 
     if name not in names:
@@ -39,10 +50,9 @@ def load_profile(name=None, season=CURRENT_SEASON, tournaments=None, best_finish
         best_finish = get_best_placement(name, CURRENT_SEASON)[1]
         no_finaltables = get_final_tables(name, CURRENT_SEASON)
         tournaments = tournaments_no(name, CURRENT_SEASON)
-        results = get_results(name, CURRENT_SEASON)
 
     return render_template('profilepage.html', name=name, tournaments=tournaments, best_finish=best_finish, tourn_finish=tourn_finish,
-                           season=season, no_finaltables=no_finaltables, results=results)
+                           season=season, no_finaltables=no_finaltables)
 
 
 
@@ -68,17 +78,20 @@ def search(name=None, response=None, name_list=None):
 @app.route('/stats')
 def load_stats(most_finals=most_final_tables(CURRENT_SEASON), most_top3=most_top_3(CURRENT_SEASON),
                best_sum=sum_of_placements(CURRENT_SEASON),
-               most_consecutive=most_consecutive_finals(CURRENT_SEASON),
-               best_avg_place=best_avg_place(CURRENT_SEASON)):
-
-
+               most_consecutive=most_consecutive_finals(CURRENT_SEASON)):
 
     return render_template('stats.html', most_finals=most_finals, most_top3=most_top3,
-                           best_sum=best_sum, most_consecutive=most_consecutive, best_avg_place=best_avg_place)
+                           best_sum=best_sum, most_consecutive=most_consecutive)
 
 
+@app.route('/clock')
+def clock():
+    """
+    The clock starts at a default value and has a given blind structure.
+    The structure must include SB, BB, ante, and duration values (min).
 
-
-
-
-
+    GET:
+        Loads the tournament clock with the default blind structure.
+    """
+    
+    return render_template('clock.pug', blinds=DEFAULT_BLINDS)
