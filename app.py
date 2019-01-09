@@ -1,10 +1,13 @@
 # Dependencies
 import logging
-from flask import Flask, render_template
+import os
+from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_scss import Scss
+from werkzeug.utils import secure_filename
 
 # Local
 from stats import *
+from randomizer import *
 
 app = Flask(__name__)
 log = logging.getLogger('werkzeug')
@@ -22,7 +25,12 @@ CURRENT_SEASON = "2018F"
 DEFAULT_BLINDS = [
     [10, 20, 0, 0.2],
     [25, 50, 1, 0.35]
+
 ]
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in 'csv'
 
 @app.route('/')
 @app.route('/tournament')
@@ -100,3 +108,28 @@ def clock():
     """
     
     return render_template('clock.pug', blinds=DEFAULT_BLINDS)
+
+
+@app.route('/randomizer', methods=['GET', 'POST'])
+def randomizer():
+
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file uploaded.')
+            return redirect(request.url)
+        file = request.files['file']
+        if not file.filename:
+            flash('No file uploaded')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            names = concatenate(file)
+
+            return redirect(url_for('upload_page',
+                                    filename=filename))
+
+    return render_template('randomizer.html')
+
+
+@app.route('/upload')
+def upload_page():
+    return render_template('upload.html')

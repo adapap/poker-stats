@@ -175,8 +175,7 @@ def best_avg_place(season):
     best_percent = 0.5
     season_id = seasons[season]
     player_list = info.seasons[season_id].players
-
-    minimum_percent = [i for i in player_list if len(i.placements)/10 > 0.5]
+    minimum_percent = [i for i in player_list if len(i.placements)/10 >= best_percent]
     player_total = defaultdict(int)
     for index, player in enumerate(minimum_percent):
 
@@ -187,6 +186,21 @@ def best_avg_place(season):
 
     data = sorted(filter(lambda y: y[1], player_total.items()), key=lambda x: x[1])
     return [x for x in data]
+
+
+def avg_to_final(season):
+    season_id = seasons[season]
+    count = tournament_count(season)
+    result = {}
+    result_avg = 0
+    for c in count.keys():
+        avg = round(20/count[c], 3)
+        result[c] = round(avg, 3)
+        result_avg += round(avg/10, 3)
+
+
+
+    return result, result_avg
 
 
 
@@ -202,11 +216,6 @@ def print_best_sum():
 
     for i in names:
         print(i + ": " + str(sum_of_placements("2018F")[1][i]))
-
-
-
-
-
 
 
 
