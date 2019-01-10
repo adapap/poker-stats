@@ -6,13 +6,16 @@
 </head>
 <body>
 {% include 'navbar.html' %}
+<h1 class="heading">Search Results</h1>
 {% if response != 'successful' %}
 <h1>{{response}}</h1>
 {% include 'footer.html' %}
 {% else %}
+    <div class="search-results-container">
     {% for name in name_list %}
-    <a href="/profiles/{{name}}/">{{name}}</a><br>
+    <a class="search-results" href="/profiles/{{name}}/">{{name}}</a><br>
     {% endfor %}
+    </div>
 {% endif %}
 </body>
 </html>

@@ -9,8 +9,11 @@
 </head>
 <body>
 {% include 'navbar.html' %}
-<input id="searchbox" type="search">
+<h1 class="heading">Profile Search</h1>
+<div id="search-container">
+<input id="searchbox" type="search" width="100" placeholder="Enter your name (Ex: Zachary or Zachary Zwerling)">
 <button type="submit" id="submitbutton" value="Submit">Submit</button>
+    </div>
 {% include 'footer.html' %}
 
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>

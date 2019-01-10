@@ -9,6 +9,13 @@ $(function(){
 
     });
 
+     $("#most-final-tables").click(function(){
+
+        $("#final-tables").show().siblings("div").hide();
+
+
+    });
+
 
      $("#most-consecutive").click(function(){
         $("#most-cscv").show().siblings("div").hide();

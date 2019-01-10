@@ -87,3 +87,28 @@ footer{
     color: white;
     font-family: 'Lato', sans-serif;
 }
+
+#search-container{
+    text-align: center;
+
+}
+
+#searchbox{
+    width: 28%;
+}
+
+.search-results-container{
+    text-align: center;
+}
+
+.search-results{
+    display: inline-block;
+    margin-top: 42px;
+    font-family: 'Lato', sans-serif;
+    color: white;
+
+}
+
+.profile-container{
+    padding-left: 5%;
+}

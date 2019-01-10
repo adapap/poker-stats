@@ -10,7 +10,8 @@
 {% include 'navbar.html' %}
 
 {% if name %}
-    <p>{{name}}'s profile</p>
+    <h1 class="subheading">{{name}}'s profile</h1>
+    <div class="profile-container">
     <h2>Season: {{season}}</h2>
     <p>Tournaments: {{tournaments}}</p>
     <p>Best Finish: {{tourn_finish}}: Place: {{best_finish}} </p>
@@ -19,7 +20,7 @@
    {% for tourn, place in results %}
       <p>{{ tourn }}: Place: {{ place }}</p>
   {% endfor %}
-
+    </div>
 {% else %}
     <p>Profile not found.</p>
 {% endif %}
